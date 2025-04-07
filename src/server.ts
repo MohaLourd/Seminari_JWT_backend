@@ -29,26 +29,26 @@ const swaggerOptions = {
         },
         tags: [
             {
-              name: 'Users',
-              description: 'Rutas relacionadas con la gestión de usuarios',
+                name: 'Users',
+                description: 'Rutas relacionadas con la gestión de usuarios'
             },
             {
-              name: 'Forum',
-              description: 'Rutas relacionadas con el forum',
+                name: 'Forum',
+                description: 'Rutas relacionadas con el forum'
             },
             {
                 name: 'Subjects',
-                description: 'Rutas relacionadas con las asignaturas',
+                description: 'Rutas relacionadas con las asignaturas'
             },
             {
                 name: 'Auth',
-                description: 'Rutas relacionadas con la autenticación',
+                description: 'Rutas relacionadas con la autenticación'
             },
             {
-              name: 'Main',
-              description: 'Rutas principales de la API',
+                name: 'Main',
+                description: 'Rutas principales de la API'
             }
-          ],
+        ],
         servers: [
             {
                 url: `http://localhost:${LOCAL_PORT}`
@@ -59,15 +59,15 @@ const swaggerOptions = {
                 bearerAuth: {
                     type: 'http',
                     scheme: 'bearer',
-                    bearerFormat: 'JWT',
-                },
-            },
+                    bearerFormat: 'JWT'
+                }
+            }
         },
         security: [
             {
-                bearerAuth: [],
-            },
-        ],
+                bearerAuth: []
+            }
+        ]
     },
     apis: ['./build/modules/users/*.js', './build/modules/forum/*.js', './build/modules/subjects/*.js', './build/modules/auth/*.js'] // Asegúrate de que esta ruta apunta a tus rutas
 };
@@ -92,7 +92,7 @@ app.get('/', (req, res) => {
 // Conexión a MongoDB
 //mongoose;
 mongoose
-    .connect(process.env.MONGODB_URI || 'mongodb+srv://joan:1234@cluster0.3owhs.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+    .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/SeminariJWT')
     .then(() => console.log('Connected to DB'))
     .catch((error) => console.error('DB Connection Error:', error));
 
@@ -101,7 +101,6 @@ app.listen(LOCAL_PORT, () => {
     console.log('Server listening on port: ' + LOCAL_PORT);
     console.log(`Swagger disponible a http://localhost:${LOCAL_PORT}/api-docs`);
 });
-function cors(arg0: { origin: string; credentials: boolean; }): any {
+function cors(arg0: { origin: string; credentials: boolean }): any {
     throw new Error('Function not implemented.');
 }
-

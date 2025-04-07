@@ -1,6 +1,8 @@
 // src/routes/user_routes.ts
 import express from 'express';
-import { registerCtrl, loginCtrl, googleAuthCtrl, googleAuthCallback } from "../auth/auth_controller.js";
+import { registerCtrl, loginCtrl, googleAuthCtrl, googleAuthCallback } from '../auth/auth_controller.js';
+import { verifyToken, generateToken } from '../../utils/jwt.handle.js'; // Importar funciones de manejo de JWT
+import User from '../users/user_models.js';
 
 const router = express.Router();
 
@@ -68,7 +70,7 @@ const router = express.Router();
  *       400:
  *         description: Error en la solicitud
  */
-router.post("/auth/register", registerCtrl);
+router.post('/auth/register', registerCtrl);
 
 /**
  * @swagger
@@ -88,7 +90,7 @@ router.post("/auth/register", registerCtrl);
  *       400:
  *         description: Error en la solicitud
  */
-router.post("/auth/login", loginCtrl);
+router.post('/auth/login', loginCtrl);
 /**
  * @swagger
  * /api/auth/google:
@@ -99,7 +101,7 @@ router.post("/auth/login", loginCtrl);
  *       302:
  *         description: Redirección a Google para autenticación
  */
-router.get('/auth/google',googleAuthCtrl );
+router.get('/auth/google', googleAuthCtrl);
 
 /**
  * @swagger
@@ -114,5 +116,50 @@ router.get('/auth/google',googleAuthCtrl );
  *         description: Error en la autenticación
  */
 router.get('/auth/google/callback', googleAuthCallback);
+
+router.post('/auth/refresh', async (req, res) => {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        return res.status(400).json({ message: 'Refresh token es requerido' });
+    }
+
+    try {
+        const decoded = verifyToken(refreshToken); // Verificar el refresh token
+
+        // Verificar si el token decodificado es un objeto JwtPayload
+        if (typeof decoded !== 'object' || !('email' in decoded)) {
+            return res.status(403).json({ message: 'Refresh token inválido' });
+        }
+
+        const user = await User.findOne({ email: decoded.email });
+        console.log('Stored refreshToken:', user?.refreshToken);
+        console.log('Provided refreshToken:', refreshToken);
+        if (!user || user.refreshToken !== refreshToken) {
+            return res.status(403).json({ message: 'Refresh token inválido' });
+        }
+
+        // Generar un nuevo access token
+        const newAccessToken = generateToken(user.email);
+
+        return res.json({ token: newAccessToken });
+    } catch (error) {
+        return res.status(403).json({ message: 'Refresh token inválido o expirado' });
+    }
+});
+router.post('/auth/logout', async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const user = await User.findOne({ email });
+        if (user) {
+            user.refreshToken = null; // Eliminar el refresh token
+            await user.save();
+        }
+        return res.status(200).json({ message: 'Logout exitoso' });
+    } catch (error) {
+        return res.status(500).json({ message: 'Error al cerrar sesión' });
+    }
+});
 
 export default router;

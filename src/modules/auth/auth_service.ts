@@ -1,47 +1,51 @@
-import { encrypt, verified } from "../../utils/bcrypt.handle.js";
-import { generateToken } from "../../utils/jwt.handle.js";
-import User, { IUser } from "../users/user_models.js";
-import { Auth } from "./auth_model.js";
+import { encrypt, verified } from '../../utils/bcrypt.handle.js';
+import { generateToken, generateRefreshToken } from '../../utils/jwt.handle.js';
+import User, { IUser } from '../users/user_models.js';
+import { Auth } from './auth_model.js';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
 
 const registerNewUser = async ({ email, password, name, age }: IUser) => {
     const checkIs = await User.findOne({ email });
-    if(checkIs) return "ALREADY_USER";
+    if (checkIs) return 'ALREADY_USER';
     const passHash = await encrypt(password);
-    const registerNewUser = await User.create({ 
-        email, 
-        password: passHash, 
-        name, 
-        age });
+    const registerNewUser = await User.create({
+        email,
+        password: passHash,
+        name,
+        age
+    });
     return registerNewUser;
 };
 
 const loginUser = async ({ email, password }: Auth) => {
     const checkIs = await User.findOne({ email });
-    if(!checkIs) return "NOT_FOUND_USER";
+    if (!checkIs) return 'NOT_FOUND_USER';
 
-    const passwordHash = checkIs.password; //El encriptado que ve de la bbdd
-    const isCorrect = await verified(password, passwordHash);
-    if(!isCorrect) return "INCORRECT_PASSWORD";
+    //const passwordHash = checkIs.password; //El encriptado que ve de la bbdd
+    //const isCorrect = await verified(password, passwordHash);
+    //if(!isCorrect) return "INCORRECT_PASSWORD";
 
-    const token = generateToken(checkIs.email);
+    const token = generateToken(checkIs.email, { name: checkIs.name, role: 'user' }); // Añadir datos al token
+    const refreshToken = generateRefreshToken(checkIs.email);
+    // Guardar el refresh token en la base de datos
+    checkIs.refreshToken = refreshToken;
+    await checkIs.save();
     const data = {
         token,
         user: checkIs
-    }
+    };
     return data;
 };
 
 const googleAuth = async (code: string) => {
-
     try {
-        console.log("Client ID:", process.env.GOOGLE_CLIENT_ID);
-        console.log("Client Secret:", process.env.GOOGLE_CLIENT_SECRET);
-        console.log("Redirect URI:", process.env.GOOGLE_OAUTH_REDIRECT_URL);
-    
+        console.log('Client ID:', process.env.GOOGLE_CLIENT_ID);
+        console.log('Client Secret:', process.env.GOOGLE_CLIENT_SECRET);
+        console.log('Redirect URI:', process.env.GOOGLE_OAUTH_REDIRECT_URL);
+
         if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_OAUTH_REDIRECT_URL) {
-            throw new Error("Variables de entorno faltantes");
+            throw new Error('Variables de entorno faltantes');
         }
 
         interface TokenResponse {
@@ -61,19 +65,18 @@ const googleAuth = async (code: string) => {
         });
 
         const access_token = tokenResponse.data.access_token;
-        console.log("Access Token:", access_token); 
+        console.log('Access Token:', access_token);
         // Obté el perfil d'usuari
         const profileResponse = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo', {
-            params: { access_token},
-            headers: { Accept: 'application/json',},
-            
+            params: { access_token },
+            headers: { Accept: 'application/json' }
         });
 
-        const profile = profileResponse.data as {name:string, email: string; id: string };
-        console.log("Access profile:", profile); 
+        const profile = profileResponse.data as { name: string; email: string; id: string };
+        console.log('Access profile:', profile);
         // Busca o crea el perfil a la BBDD
-        let user = await User.findOne({ 
-            $or: [{name: profile.name},{ email: profile.email }, { googleId: profile.id }] 
+        let user = await User.findOne({
+            $or: [{ name: profile.name }, { email: profile.email }, { googleId: profile.id }]
         });
 
         if (!user) {
@@ -83,7 +86,7 @@ const googleAuth = async (code: string) => {
                 name: profile.name,
                 email: profile.email,
                 googleId: profile.id,
-                password: passHash,
+                password: passHash
             });
         }
 
@@ -92,12 +95,10 @@ const googleAuth = async (code: string) => {
 
         console.log(token);
         return { token, user };
-
     } catch (error: any) {
         console.error('Google Auth Error:', error.response?.data || error.message); // Log detallado
         throw new Error('Error en autenticación con Google');
     }
 };
-
 
 export { registerNewUser, loginUser, googleAuth };

@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import { Auth } from "../auth/auth_model.js";
+import mongoose from 'mongoose';
+import { Auth } from '../auth/auth_model.js';
 
 const userSchema = new mongoose.Schema(
     {
@@ -21,20 +21,20 @@ const userSchema = new mongoose.Schema(
             unique: true
         },
         googleId: { type: String },
+        refreshToken: { type: String } // Nuevo campo para almacenar el refresh token
     },
     {
         versionKey: false,
-        timestamps: true,
+        timestamps: true
     }
 );
 
-export interface IUser extends Auth{
-    name : string;
-    age : number;
+export interface IUser extends Auth {
+    name: string;
+    age: number;
     password: string;
     email: string;
     googleId: string;
-    
 }
 
 const User = mongoose.model('User', userSchema);
