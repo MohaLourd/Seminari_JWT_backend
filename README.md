@@ -91,3 +91,6 @@ GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_OAUTH_REDIRECT_URL=http://localhost:9000/api/auth/google/callback
 ```
 14.- Assegurar que aquestes variables estiguin carregades abans d'iniciar el servidor, utilitzar per defecte npm start per fer RUN en el projecte (ruta per defecte per agafar les variables d'entorn integrada).
+
+
+Referencias: Video : https://www.youtube.com/watch?v=UqnnhAZxRac y Copilot (IA). He enentendido bien el concepto y desde aquí pido a la upc que suban el tiempo de expiración, me cansa tener que salir a iniciar sesión cada corto tiempo. 
